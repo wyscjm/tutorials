@@ -99,6 +99,8 @@ class_names = image_datasets['train'].classes
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+print("load data")
+
 ######################################################################
 # Visualize a few images
 # ^^^^^^^^^^^^^^^^^^^^^^
@@ -118,13 +120,6 @@ def imshow(inp, title=None):
     plt.pause(0.001)  # pause a bit so that plots are updated
 
 
-# Get a batch of training data
-inputs, classes = next(iter(dataloaders['train']))
-
-# Make a grid from batch
-out = torchvision.utils.make_grid(inputs)
-
-imshow(out, title=[class_names[x] for x in classes])
 
 
 ######################################################################
@@ -244,98 +239,6 @@ def visualize_model(model, num_images=6):
         model.train(mode=was_training)
 
 ######################################################################
-# Finetuning the convnet
-# ----------------------
-#
-# Load a pretrained model and reset final fully connected layer.
-#
-
-model_ft = models.resnet18(pretrained=True)
-num_ftrs = model_ft.fc.in_features
-# Here the size of each output sample is set to 2.
-# Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
-model_ft.fc = nn.Linear(num_ftrs, 2)
-
-model_ft = model_ft.to(device)
-
-criterion = nn.CrossEntropyLoss()
-
-# Observe that all parameters are being optimized
-optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
-
-# Decay LR by a factor of 0.1 every 7 epochs
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
-
-######################################################################
-# Train and evaluate
-# ^^^^^^^^^^^^^^^^^^
-#
-# It should take around 15-25 min on CPU. On GPU though, it takes less than a
-# minute.
-#
-
-model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=25)
-
-######################################################################
-#
-
-visualize_model(model_ft)
-
-
-######################################################################
-# ConvNet as fixed feature extractor
-# ----------------------------------
-#
-# Here, we need to freeze all the network except the final layer. We need
-# to set ``requires_grad == False`` to freeze the parameters so that the
-# gradients are not computed in ``backward()``.
-#
-# You can read more about this in the documentation
-# `here <https://pytorch.org/docs/notes/autograd.html#excluding-subgraphs-from-backward>`__.
-#
-
-model_conv = torchvision.models.resnet18(pretrained=True)
-for param in model_conv.parameters():
-    param.requires_grad = False
-
-# Parameters of newly constructed modules have requires_grad=True by default
-num_ftrs = model_conv.fc.in_features
-model_conv.fc = nn.Linear(num_ftrs, 2)
-
-model_conv = model_conv.to(device)
-
-criterion = nn.CrossEntropyLoss()
-
-# Observe that only parameters of final layer are being optimized as
-# opposed to before.
-optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.001, momentum=0.9)
-
-# Decay LR by a factor of 0.1 every 7 epochs
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
-
-
-######################################################################
-# Train and evaluate
-# ^^^^^^^^^^^^^^^^^^
-#
-# On CPU this will take about half the time compared to previous scenario.
-# This is expected as gradients don't need to be computed for most of the
-# network. However, forward does need to be computed.
-#
-
-model_conv = train_model(model_conv, criterion, optimizer_conv,
-                         exp_lr_scheduler, num_epochs=25)
-
-######################################################################
-#
-
-visualize_model(model_conv)
-
-plt.ioff()
-plt.show()
-
-######################################################################
 # Further Learning
 # -----------------
 #
@@ -343,4 +246,109 @@ plt.show()
 # checkout our `Quantized Transfer Learning for Computer Vision Tutorial <https://pytorch.org/tutorials/intermediate/quantized_transfer_learning_tutorial.html>`_.
 #
 #
+
+if __name__ == '__main__':
+    # Get a batch of training data
+    inputs, classes = next(iter(dataloaders['train']))
+    
+    # Make a grid from batch
+    out = torchvision.utils.make_grid(inputs)
+    
+    imshow(out, title=[class_names[x] for x in classes])
+    print("show origin data")
+
+
+    ######################################################################
+    # Finetuning the convnet
+    # ----------------------
+    #
+    # Load a pretrained model and reset final fully connected layer.
+    #
+    
+    model_ft = models.resnet18(pretrained=True)
+    num_ftrs = model_ft.fc.in_features
+    # Here the size of each output sample is set to 2.
+    # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
+    model_ft.fc = nn.Linear(num_ftrs, 2)
+    
+    model_ft = model_ft.to(device)
+    
+    criterion = nn.CrossEntropyLoss()
+    
+    # Observe that all parameters are being optimized
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+    
+    # Decay LR by a factor of 0.1 every 7 epochs
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
+    
+    print("pre trained data")
+    
+    ######################################################################
+    # Train and evaluate
+    # ^^^^^^^^^^^^^^^^^^
+    #
+    # It should take around 15-25 min on CPU. On GPU though, it takes less than a
+    # minute.
+    #
+    
+    model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
+                           num_epochs=25)
+    
+    ######################################################################
+    #
+    
+    visualize_model(model_ft)
+    
+    
+    ######################################################################
+    # ConvNet as fixed feature extractor
+    # ----------------------------------
+    #
+    # Here, we need to freeze all the network except the final layer. We need
+    # to set ``requires_grad == False`` to freeze the parameters so that the
+    # gradients are not computed in ``backward()``.
+    #
+    # You can read more about this in the documentation
+    # `here <https://pytorch.org/docs/notes/autograd.html#excluding-subgraphs-from-backward>`__.
+    #
+    
+    model_conv = torchvision.models.resnet18(pretrained=True)
+    for param in model_conv.parameters():
+        param.requires_grad = False
+    
+    # Parameters of newly constructed modules have requires_grad=True by default
+    num_ftrs = model_conv.fc.in_features
+    model_conv.fc = nn.Linear(num_ftrs, 2)
+    
+    model_conv = model_conv.to(device)
+    
+    criterion = nn.CrossEntropyLoss()
+    
+    # Observe that only parameters of final layer are being optimized as
+    # opposed to before.
+    optimizer_conv = optim.SGD(model_conv.fc.parameters(), lr=0.001, momentum=0.9)
+    
+    # Decay LR by a factor of 0.1 every 7 epochs
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
+    
+    
+    ######################################################################
+    # Train and evaluate
+    # ^^^^^^^^^^^^^^^^^^
+    #
+    # On CPU this will take about half the time compared to previous scenario.
+    # This is expected as gradients don't need to be computed for most of the
+    # network. However, forward does need to be computed.
+    #
+    
+    model_conv = train_model(model_conv, criterion, optimizer_conv,
+                             exp_lr_scheduler, num_epochs=25)
+    
+    ######################################################################
+    #
+    
+    visualize_model(model_conv)
+
+    plt.ioff()
+    plt.show()
 
