@@ -87,7 +87,7 @@ data_transforms = {
     ]),
 }
 
-data_dir = 'data/hymenoptera_data'
+data_dir = 'data/face'
 image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
                                           data_transforms[x])
                   for x in ['train', 'val']}
@@ -258,6 +258,7 @@ if __name__ == '__main__':
     print("show origin data")
 
 
+
     ######################################################################
     # Finetuning the convnet
     # ----------------------
@@ -265,7 +266,8 @@ if __name__ == '__main__':
     # Load a pretrained model and reset final fully connected layer.
     #
     
-    model_ft = models.resnet18(pretrained=True)
+    #model_ft = models.resnet18(pretrained=True)
+    model_ft = models.resnet18(pretrained=False)
     num_ftrs = model_ft.fc.in_features
     # Here the size of each output sample is set to 2.
     # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
