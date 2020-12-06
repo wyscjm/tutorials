@@ -267,11 +267,11 @@ if __name__ == '__main__':
     #
     
     #model_ft = models.resnet18(pretrained=True)
-    model_ft = models.resnet18(pretrained=False)
+    model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
     # Here the size of each output sample is set to 2.
     # Alternatively, it can be generalized to nn.Linear(num_ftrs, len(class_names)).
-    model_ft.fc = nn.Linear(num_ftrs, 2)
+    model_ft.fc = nn.Linear(num_ftrs, 7)
     
     model_ft = model_ft.to(device)
     
@@ -320,7 +320,7 @@ if __name__ == '__main__':
     
     # Parameters of newly constructed modules have requires_grad=True by default
     num_ftrs = model_conv.fc.in_features
-    model_conv.fc = nn.Linear(num_ftrs, 2)
+    model_conv.fc = nn.Linear(num_ftrs, 7)
     
     model_conv = model_conv.to(device)
     
